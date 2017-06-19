@@ -7,8 +7,8 @@ import base64
 import json
 import time
 
-USERNAME = 'gray'
-PASSWORD = '@cjcyb@EUKZ2'
+USERNAME = ''
+PASSWORD = ''
 REQUEST_URL = 'http://192.168.1.219:8080/gui/'
 
 TR_HASH = 0

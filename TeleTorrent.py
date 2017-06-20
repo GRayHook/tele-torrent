@@ -7,14 +7,20 @@ import base64
 import json
 import time
 
-USERNAME = ''
-PASSWORD = ''
+# Constants for requests to uTorrent
+USERNAME = 'gray'
+PASSWORD = '@cjcyb@EUKZ2'
 REQUEST_URL = 'http://192.168.1.219:8080/gui/'
 
+# Constants for indexes uTorrent's list of torrents
 TR_HASH = 0
 TR_STATUS = 1
 TR_NAME = 2
 TR_PROGRESS = 4
+
+# Constants for requests to Telegram
+TG_TOKEN = '435150189:AAHEcUokmbFmqhdec8dQl88KdjD_eKqpRi8'
+TG_LINK = 'https://api.telegram.org/bot' + TG_TOKEN + '/'
 
 def main():
     """Body of program"""
@@ -30,6 +36,25 @@ def main():
                 if not watchins.__contains__(torrent[TR_HASH]):
                     watchins += [torrent[TR_HASH]]
         time.sleep(7)
+
+def tg_get_msgs(cur_msg):
+    """Getting list of messages from Telegram chats.
+    cur_msg — last message, that have been getting from chats, + 1"""
+    request_string = TG_LINK + 'getUpdates?offset=' + str(cur_msg)
+    response = urllib2.urlopen(request_string)
+    results = json.loads(response.read())[u'result']
+    last = False
+    for result in results:
+        last = result[u'update_id']
+        tg_handler(result[u'message'])
+    # Drop readed messages from Telegram server:
+    if last:
+        request_string = TG_LINK + 'getUpdates?offset=' + str(last + 1)
+        urllib2.urlopen(request_string)
+
+def tg_handler(message):
+    """Handler for incoming messages from Telegram"""
+    print message
 
 def send_torrent(msg):
     """Sending message via Telegram"""

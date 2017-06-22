@@ -26,18 +26,25 @@ TG_LINK = 'https://api.telegram.org/bot' + TG_TOKEN + '/'
 
 def main():
     """Body of program"""
-    tr_evnt = threading.Event()
-    utor_thread = threading.Thread(target=tr_thread,
-                                   args=[tr_evnt],
-                                   name='uTorrent')
-    utor_thread.start()
     try:
+        tr_evnt = threading.Event()
+        tg_evnt = threading.Event()
+        utor_thread = threading.Thread(target=tr_thread,
+                                       args=[tr_evnt],
+                                       name='uTorrent')
+        tgram_thread = threading.Thread(target=tg_thread,
+                                        args=[tg_evnt],
+                                        name='uTorrent')
+        utor_thread.start()
+        tgram_thread.start()
         while True:
             time.sleep(10)
     except KeyboardInterrupt:
         print "Waiting for threads"
         tr_evnt.set()
+        tg_evnt.set()
         utor_thread.join()
+        tgram_thread.join()
         print "Threads closed"
 
 
@@ -56,10 +63,16 @@ def tr_thread(evnt):
                     watchins += [torrent[TR_HASH]]
         time.sleep(7)
 
-def tg_get_msgs(cur_msg):
+def tg_thread(evnt):
+    """Thread for Telegram bot daemon"""
+    while not evnt.is_set():
+        tg_get_msgs()
+        time.sleep(2)
+
+def tg_get_msgs():
     """Getting list of messages from Telegram chats.
     cur_msg — last message, that have been getting from chats, + 1"""
-    request_string = TG_LINK + 'getUpdates?offset=' + str(cur_msg)
+    request_string = TG_LINK + 'getUpdates?offset=' + str(2)
     response = urllib2.urlopen(request_string)
     results = json.loads(response.read())[u'result']
     last = False

@@ -2,17 +2,15 @@
 # Copyright © 2017 Marinkevich Sergey (G-Ray_Hook). All rights reserved.
 # Licensed under GNU GPLv2 (look at file named 'LICENSE')
 # Contact: s@marinkevich.ru
-"""sss"""
+"""uTorrent notification for Telegram"""
 import urllib2
 import base64
 import json
 import time
 import threading
 
-# Constants for requests to uTorrent
-USERNAME = ''
-PASSWORD = ''
-REQUEST_URL = ''
+# Files's constants
+FILE_SETTINGS = 'settings'
 
 # Constants for indexes uTorrent's list of torrents
 TR_HASH = 0
@@ -21,7 +19,7 @@ TR_NAME = 2
 TR_PROGRESS = 4
 
 # Constants for requests to Telegram
-TG_TOKEN = ''
+TG_TOKEN = '435150189:AAHEcUokmbFmqhdec8dQl88KdjD_eKqpRi8'
 TG_LINK = 'https://api.telegram.org/bot' + TG_TOKEN + '/'
 
 def main():
@@ -47,20 +45,40 @@ def main():
         tgram_thread.join()
         print "Threads closed"
 
-
 def tr_thread(evnt):
     """Target for uTorrent's thread"""
     watchins = []
+    httperror = []
     while not evnt.is_set():
-        guid, token = get_data()
-        torrents = json.loads(get_list(guid, token))[u'torrents']
-        for torrent in torrents:
-            if torrent[TR_PROGRESS] == 1000:
-                if watchins.__contains__(torrent[TR_HASH]):
-                    send_torrent(torrent[TR_NAME])
-            else:
-                if not watchins.__contains__(torrent[TR_HASH]):
-                    watchins += [torrent[TR_HASH]]
+        try:
+            settings = file(FILE_SETTINGS, 'r')
+            setts = json.load(settings)
+            settings.close()
+        except IOError:
+            setts = {}
+        for sett in setts:
+            try:
+                guid, token = get_data(setts[sett])
+                torrents = json.loads(get_list(guid,
+                                               token,
+                                               setts[sett]))[u'torrents']
+                if httperror.__contains__(sett):
+                    del httperror[httperror.index(sett)]
+            except urllib2.HTTPError:
+                torrents = []
+                if not httperror.__contains__(sett):
+                    tg_send(sett, 'Your URL is not valid (404)')
+                    httperror += [sett]
+            for torrent in torrents:
+                if torrent[TR_PROGRESS] == 1000:
+                    if watchins.__contains__(torrent[TR_HASH]):
+                        del watchins[watchins.index(torrent[TR_HASH])]
+                        text = 'Your .torrent named "' + torrent[TR_NAME] + \
+                               '" have been downloaded successful'
+                        tg_send(sett, text)
+                else:
+                    if not watchins.__contains__(torrent[TR_HASH]):
+                        watchins += [torrent[TR_HASH]]
         time.sleep(7)
 
 def tg_thread(evnt):
@@ -93,41 +111,71 @@ def tg_handler(message):
 def tg_msg_hz(message):
     """For unknown cases of reiceved messages"""
     print 'called hz\n', message['text']
+    tg_send(message['chat']['id'], 'I don\'t understand you')
 
 def tg_msg_reg(message):
     """Adding ip, uname, passwd to conf-file"""
-    print 'called reg\n', message['text'], '\n', message['text'].split()
+    print 'called reg\n', message, '\n'
+    args = message['text'].split()[1:]
+    try:
+        settings = file(FILE_SETTINGS, 'r')
+        setts = json.load(settings)
+        settings.close()
+    except IOError:
+        setts = {}
+    try:
+        setts[str(message[u'chat'][u'id'])] = {'uname': args[0],
+                                               'passwd': args[1],
+                                               'rq_url': args[2]}
+        settings = file(FILE_SETTINGS, 'w')
+        json.dump(setts, settings)
+        settings.close()
+        tg_send(message[u'chat'][u'id'], 'I remember')
+    except IndexError:
+        tg_msg_hz(message)
 
 def tg_msg_forget(message):
     """Deleting ip, uname, passwd from conf-file"""
-    print 'called forget\n', message['text']
+    try:
+        settings = file(FILE_SETTINGS, 'r')
+        setts = json.load(settings)
+        settings.close()
+    except IOError:
+        setts = {}
+    del setts[str(message['chat']['id'])]
+    settings = file(FILE_SETTINGS, 'w')
+    json.dump(setts, settings)
+    settings.close()
+    tg_send(message['chat']['id'], 'You have been forgotten')
 
 TG_FUNS = {'/reg': tg_msg_reg, '/forget': tg_msg_forget}
 
-def send_torrent(msg):
+def tg_send(chat_id, text):
     """Sending message via Telegram"""
-    print 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', msg
+    request = TG_LINK + 'sendMessage?chat_id=' + str(chat_id) + '&text=' + text
+    urllib2.urlopen(request)
 
-def get_list(guid, token):
+def get_list(guid, token, sett):
     """Getting list of torrents"""
-    request = auth_request(REQUEST_URL + '?token=' + token + '&list=1')
+    request = auth_request(sett['rq_url'] + '?token=' + token + '&list=1', sett)
     request.add_header("Cookie", "GUID=%s;" % guid)
     response = urllib2.urlopen(request)
     return response.read()
 
-def get_data():
+def get_data(sett):
     """Getting data(guid, token) from uTorrent by http"""
-    request = auth_request(REQUEST_URL + 'token.html')
+    request = auth_request(sett['rq_url'] + 'token.html', sett)
     response = urllib2.urlopen(request)
     headers = response.headers.items()
     guid = get_cooka(headers, 'GUID')
     token = get_divka(response.read(), 'token')
     return guid, token
 
-def auth_request(url):
+def auth_request(url, data):
     """Authorized request (by CONSTS in a begining of code)"""
     request = urllib2.Request(url)
-    base64string = base64.encodestring('%s:%s' % (USERNAME, PASSWORD))
+    base64string = base64.encodestring('%s:%s' %
+                                       (data['uname'], data['passwd']))
     base64string = base64string.replace('\n', '')
     request.add_header("Authorization", "Basic %s" % base64string)
     return request

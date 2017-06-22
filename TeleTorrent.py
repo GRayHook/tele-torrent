@@ -1,15 +1,17 @@
 # coding: utf-8
 # Copyright © 2017 Marinkevich Sergey (G-Ray_Hook). All rights reserved.
 # Licensed under GNU GPLv2 (look at file named 'LICENSE')
+# Contact: s@marinkevich.ru
 """sss"""
 import urllib2
 import base64
 import json
 import time
+import threading
 
 # Constants for requests to uTorrent
-USERNAME = 'gray'
-PASSWORD = '@cjcyb@EUKZ2'
+USERNAME = ''
+PASSWORD = ''
 REQUEST_URL = 'http://192.168.1.219:8080/gui/'
 
 # Constants for indexes uTorrent's list of torrents
@@ -19,13 +21,30 @@ TR_NAME = 2
 TR_PROGRESS = 4
 
 # Constants for requests to Telegram
-TG_TOKEN = '435150189:AAHEcUokmbFmqhdec8dQl88KdjD_eKqpRi8'
+TG_TOKEN = ''
 TG_LINK = 'https://api.telegram.org/bot' + TG_TOKEN + '/'
 
 def main():
     """Body of program"""
+    tr_evnt = threading.Event()
+    utor_thread = threading.Thread(target=tr_thread,
+                                   args=[tr_evnt],
+                                   name='uTorrent')
+    utor_thread.start()
+    try:
+        while True:
+            time.sleep(10)
+    except KeyboardInterrupt:
+        print "Waiting for threads"
+        tr_evnt.set()
+        utor_thread.join()
+        print "Threads closed"
+
+
+def tr_thread(evnt):
+    """Target for uTorrent's thread"""
     watchins = []
-    while True:
+    while not evnt.is_set():
         guid, token = get_data()
         torrents = json.loads(get_list(guid, token))[u'torrents']
         for torrent in torrents:

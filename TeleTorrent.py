@@ -12,7 +12,7 @@ import threading
 # Constants for requests to uTorrent
 USERNAME = ''
 PASSWORD = ''
-REQUEST_URL = 'http://192.168.1.219:8080/gui/'
+REQUEST_URL = ''
 
 # Constants for indexes uTorrent's list of torrents
 TR_HASH = 0
@@ -40,7 +40,7 @@ def main():
         while True:
             time.sleep(10)
     except KeyboardInterrupt:
-        print "Waiting for threads"
+        print "\nWaiting for threads"
         tr_evnt.set()
         tg_evnt.set()
         utor_thread.join()
@@ -72,7 +72,7 @@ def tg_thread(evnt):
 def tg_get_msgs():
     """Getting list of messages from Telegram chats.
     cur_msg — last message, that have been getting from chats, + 1"""
-    request_string = TG_LINK + 'getUpdates?offset=' + str(2)
+    request_string = TG_LINK + 'getUpdates?offset=2'
     response = urllib2.urlopen(request_string)
     results = json.loads(response.read())[u'result']
     last = False
@@ -86,7 +86,23 @@ def tg_get_msgs():
 
 def tg_handler(message):
     """Handler for incoming messages from Telegram"""
-    print message
+    txt = message['text']
+    command = txt.split()
+    TG_FUNS.get(command[0], tg_msg_hz)(message)
+
+def tg_msg_hz(message):
+    """For unknown cases of reiceved messages"""
+    print 'called hz\n', message['text']
+
+def tg_msg_reg(message):
+    """Adding ip, uname, passwd to conf-file"""
+    print 'called reg\n', message['text'], '\n', message['text'].split()
+
+def tg_msg_forget(message):
+    """Deleting ip, uname, passwd from conf-file"""
+    print 'called forget\n', message['text']
+
+TG_FUNS = {'/reg': tg_msg_reg, '/forget': tg_msg_forget}
 
 def send_torrent(msg):
     """Sending message via Telegram"""

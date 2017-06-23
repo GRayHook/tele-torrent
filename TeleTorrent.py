@@ -19,7 +19,7 @@ TR_NAME = 2
 TR_PROGRESS = 4
 
 # Constants for requests to Telegram
-TG_TOKEN = '435150189:AAHEcUokmbFmqhdec8dQl88KdjD_eKqpRi8'
+TG_TOKEN = 'PLACE_YOUR_TOKEN'
 TG_LINK = 'https://api.telegram.org/bot' + TG_TOKEN + '/'
 
 def main():
@@ -88,8 +88,7 @@ def tg_thread(evnt):
         time.sleep(2)
 
 def tg_get_msgs():
-    """Getting list of messages from Telegram chats.
-    cur_msg — last message, that have been getting from chats, + 1"""
+    """Getting list of messages from Telegram chats"""
     request_string = TG_LINK + 'getUpdates?offset=2'
     response = urllib2.urlopen(request_string)
     results = json.loads(response.read())[u'result']

@@ -48,7 +48,6 @@ def main():
 def tr_thread(evnt):
     """Target for uTorrent's thread"""
     watchins = []
-    httperror = []
     while not evnt.is_set():
         try:
             settings = file(FILE_SETTINGS, 'r')
@@ -62,13 +61,8 @@ def tr_thread(evnt):
                 torrents = json.loads(get_list(guid,
                                                token,
                                                setts[sett]))[u'torrents']
-                if httperror.__contains__(sett):
-                    del httperror[httperror.index(sett)]
             except urllib2.HTTPError:
                 torrents = []
-                if not httperror.__contains__(sett):
-                    tg_send(sett, 'Your URL is not valid (404)')
-                    httperror += [sett]
             for torrent in torrents:
                 if torrent[TR_PROGRESS] == 1000:
                     if watchins.__contains__(torrent[TR_HASH]):
@@ -115,7 +109,7 @@ def tg_msg_hz(message):
 def tg_msg_reg(message):
     """Adding ip, uname, passwd to conf-file"""
     print 'called reg\n', message, '\n'
-    args = message['text'].split()[1:]
+    args = message[u'text'].split()[1:]
     try:
         settings = file(FILE_SETTINGS, 'r')
         setts = json.load(settings)
@@ -123,13 +117,17 @@ def tg_msg_reg(message):
     except IOError:
         setts = {}
     try:
-        setts[str(message[u'chat'][u'id'])] = {'uname': args[0],
-                                               'passwd': args[1],
-                                               'rq_url': args[2]}
+        sett = {'uname': args[0],
+                'passwd': args[1],
+                'rq_url': args[2]}
+        setts[str(message[u'chat'][u'id'])] = sett
+        get_data(sett)
         settings = file(FILE_SETTINGS, 'w')
         json.dump(setts, settings)
         settings.close()
         tg_send(message[u'chat'][u'id'], 'I remember')
+    except urllib2.HTTPError:
+        tg_send(message[u'chat'][u'id'], 'Your URL is not valid (404)')
     except IndexError:
         tg_msg_hz(message)
 

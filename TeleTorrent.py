@@ -32,7 +32,7 @@ def main():
                                        name='uTorrent')
         tgram_thread = threading.Thread(target=tg_thread,
                                         args=[tg_evnt],
-                                        name='uTorrent')
+                                        name='Telegram')
         utor_thread.start()
         tgram_thread.start()
         while True:
@@ -86,16 +86,19 @@ def tg_thread(evnt):
 def tg_get_msgs():
     """Getting list of messages from Telegram chats"""
     request_string = TG_LINK + 'getUpdates?offset=2'
-    response = urllib2.urlopen(request_string)
-    results = json.loads(response.read())[u'result']
-    last = False
-    for result in results:
-        last = result[u'update_id']
-        tg_handler(result[u'message'])
-    # Drop readed messages from Telegram server:
-    if last:
-        request_string = TG_LINK + 'getUpdates?offset=' + str(last + 1)
-        urllib2.urlopen(request_string)
+    try:
+        response = urllib2.urlopen(request_string)
+        results = json.loads(response.read())[u'result']
+        last = False
+        for result in results:
+            last = result[u'update_id']
+            tg_handler(result[u'message'])
+            # Drop readed messages from Telegram server:
+            if last:
+                request_string = TG_LINK + 'getUpdates?offset=' + str(last + 1)
+                urllib2.urlopen(request_string)
+    except urllib2.HTTPError:
+        print 'alarma 404'
 
 def tg_handler(message):
     """Handler for incoming messages from Telegram"""

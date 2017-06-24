@@ -156,7 +156,8 @@ TG_FUNS = {'/reg': tg_msg_reg, '/forget': tg_msg_forget}
 
 def tg_send(chat_id, text):
     """Sending message via Telegram"""
-    request = TG_LINK + 'sendMessage?chat_id=' + str(chat_id) + '&text=' + text
+    request = TG_LINK + 'sendMessage?chat_id=' + str(chat_id) + '&text=' + \
+              text.encode('utf-8')
     urllib2.urlopen(request)
 
 def get_list(guid, token, sett):

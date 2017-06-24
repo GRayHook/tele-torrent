@@ -63,6 +63,8 @@ def tr_thread(evnt):
                                                setts[sett]))[u'torrents']
             except urllib2.HTTPError:
                 torrents = []
+            except urllib2.URLError:
+                torrents = []
             for torrent in torrents:
                 if torrent[TR_PROGRESS] == 1000:
                     if watchins.__contains__(torrent[TR_HASH]):
@@ -127,7 +129,9 @@ def tg_msg_reg(message):
         settings.close()
         tg_send(message[u'chat'][u'id'], 'I remember')
     except urllib2.HTTPError:
-        tg_send(message[u'chat'][u'id'], 'Your URL is not valid (404)')
+        tg_send(message[u'chat'][u'id'], 'Your URL is not valid (404?)')
+    except urllib2.URLError:
+        tg_send(message[u'chat'][u'id'], 'Your URL is not valid (500?)')
     except IndexError:
         tg_msg_hz(message)
 

@@ -111,7 +111,7 @@ def tg_handler(message):
 def tg_msg_hz(message):
     """For unknown cases of reiceved messages"""
     print 'called hz\n', message['text']
-    tg_send(message[u'chat'][u'id'], 'I don\'t understand you')
+    tg_send(message[u'chat'][u'id'], 'I don\'t understand you\n' + 'Type /help')
 
 def tg_msg_start(message):
     """For start command"""
@@ -127,10 +127,10 @@ def tg_msg_help(message):
     """For help command"""
     print 'called hz\n', message['text']
     mesage = 'Available commands:\n' +\
-             '/reg [username] [password] [URL] - Save user\'s data' +\
-             '/forget - Delete user\'s data' +\
-             '/help - this list' +\
-             '/start - welcome message' +\
+             '/reg [username] [password] [URL] - Save user\'s data\n' +\
+             '/forget - Delete user\'s data\n' +\
+             '/help - this list\n' +\
+             '/start - welcome message\n' +\
              'More info available at http://marinkevich.ru/utor'
     tg_send(message[u'chat'][u'id'], mesage)
 
@@ -182,8 +182,8 @@ TG_FUNS = {'/reg': tg_msg_reg,
 
 def tg_send(chat_id, text):
     """Sending message via Telegram"""
-    request = TG_LINK + 'sendMessage?chat_id=' + str(chat_id) + '&text=' + \
-              text.encode('utf-8')
+    text = urllib2.quote(text.encode('utf-8'))
+    request = TG_LINK + 'sendMessage?chat_id=' + str(chat_id) + '&text=' + text
     urllib2.urlopen(request)
 
 def get_list(guid, token, sett):

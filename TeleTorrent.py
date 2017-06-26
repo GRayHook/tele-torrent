@@ -113,6 +113,27 @@ def tg_msg_hz(message):
     print 'called hz\n', message['text']
     tg_send(message[u'chat'][u'id'], 'I don\'t understand you')
 
+def tg_msg_start(message):
+    """For start command"""
+    print 'called hz\n', message['text']
+    mesage = 'Hi!\n' +\
+             'Check that your PC available from outer web.\n' +\
+             'Enable web interface in your uTorrent.\n' +\
+             'Use /reg command to connect your PC with bot\n' +\
+             'Type /help for command list'
+    tg_send(message[u'chat'][u'id'], mesage)
+
+def tg_msg_help(message):
+    """For help command"""
+    print 'called hz\n', message['text']
+    mesage = 'Available commands:\n' +\
+             '/reg [username] [password] [URL] - Save user\'s data' +\
+             '/forget - Delete user\'s data' +\
+             '/help - this list' +\
+             '/start - welcome message' +\
+             'More info available at http://marinkevich.ru/utor'
+    tg_send(message[u'chat'][u'id'], mesage)
+
 def tg_msg_reg(message):
     """Adding ip, uname, passwd to conf-file"""
     print 'called reg\n', message, '\n'
@@ -154,7 +175,10 @@ def tg_msg_forget(message):
     settings.close()
     tg_send(message[u'chat'][u'id'], 'You have been forgotten')
 
-TG_FUNS = {'/reg': tg_msg_reg, '/forget': tg_msg_forget}
+TG_FUNS = {'/reg': tg_msg_reg,
+           '/forget': tg_msg_forget,
+           '/help': tg_msg_help,
+           '/start': tg_msg_start}
 
 def tg_send(chat_id, text):
     """Sending message via Telegram"""

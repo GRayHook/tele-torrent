@@ -92,6 +92,8 @@ def tg_get_msgs():
         last = False
         for result in results:
             last = result[u'update_id']
+            txt_drisnya = result[u'message'][u'text']
+            result[u'message'][u'text'] = txt_drisnya.encode('utf-8')
             tg_handler(result[u'message'])
             # Drop readed messages from Telegram server:
             if last:
@@ -102,14 +104,14 @@ def tg_get_msgs():
 
 def tg_handler(message):
     """Handler for incoming messages from Telegram"""
-    txt = message['text']
+    txt = message[u'text']
     command = txt.split()
     TG_FUNS.get(command[0], tg_msg_hz)(message)
 
 def tg_msg_hz(message):
     """For unknown cases of reiceved messages"""
     print 'called hz\n', message['text']
-    tg_send(message['chat']['id'], 'I don\'t understand you')
+    tg_send(message[u'chat'][u'id'], 'I don\'t understand you')
 
 def tg_msg_reg(message):
     """Adding ip, uname, passwd to conf-file"""
@@ -146,11 +148,11 @@ def tg_msg_forget(message):
         settings.close()
     except IOError:
         setts = {}
-    del setts[str(message['chat']['id'])]
+    del setts[str(message[u'chat'][u'id'])]
     settings = file(FILE_SETTINGS, 'w')
     json.dump(setts, settings)
     settings.close()
-    tg_send(message['chat']['id'], 'You have been forgotten')
+    tg_send(message[u'chat'][u'id'], 'You have been forgotten')
 
 TG_FUNS = {'/reg': tg_msg_reg, '/forget': tg_msg_forget}
 

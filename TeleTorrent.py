@@ -92,9 +92,12 @@ def tg_get_msgs():
         last = False
         for result in results:
             last = result[u'update_id']
-            txt_drisnya = result[u'message'][u'text']
-            result[u'message'][u'text'] = txt_drisnya.encode('utf-8')
-            tg_handler(result[u'message'])
+            try:
+                txt_drisnya = result[u'message'][u'text']
+                result[u'message'][u'text'] = txt_drisnya.encode('utf-8')
+                tg_handler(result[u'message'])
+            except KeyError:
+                print result[u'update_id'], ': without text'
             # Drop readed messages from Telegram server:
             if last:
                 request_string = TG_LINK + 'getUpdates?offset=' + str(last + 1)

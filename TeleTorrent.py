@@ -3,11 +3,13 @@
 # Licensed under GNU GPLv2 (look at file named 'LICENSE')
 # Contact: s@marinkevich.ru
 """uTorrent notification for Telegram"""
-import urllib2
-import base64
-import json
 import time
 import threading
+import json
+import base64
+import urllib2
+import socket
+import socks
 
 # Files's constants
 FILE_SETTINGS = 'settings'
@@ -79,6 +81,8 @@ def tr_thread(evnt):
 
 def tg_thread(evnt):
     """Thread for Telegram bot daemon"""
+    socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "80.89.204.123", 9100)
+    socket.socket = socks.socksocket
     while not evnt.is_set():
         tg_get_msgs()
         time.sleep(2)
